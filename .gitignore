@@ -1,0 +1,24 @@
+# .env file - contains sensitive API keys
+backend/.env
+
+# Python virtual environment
+backend/venv/
+venv/
+env/
+
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.pyc
+__pycache__/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

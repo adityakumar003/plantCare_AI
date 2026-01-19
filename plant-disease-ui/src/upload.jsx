@@ -64,7 +64,7 @@ function Upload() {
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("image", file);
 
       const response = await axios.post("http://127.0.0.1:5000/predict", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -72,7 +72,7 @@ function Upload() {
 
       // Transform API response to match UI format
       const prediction = {
-        disease: response.data.prediction,
+        disease: response.data.disease || response.data.prediction,
         confidence: response.data.confidence || 95,
         severity: response.data.severity || 'moderate',
         description: response.data.description || 'Disease detected in plant leaf.',
@@ -111,17 +111,16 @@ function Upload() {
           {/* Upload Section */}
           <div className="bg-white rounded-3xl p-8 shadow-lg">
             <h2 className="text-2xl font-bold text-[#2D5016] mb-6">Upload Image</h2>
-            
+
             {/* Drag and Drop Area */}
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-              className={`border-3 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
-                isDragging
-                  ? 'border-[#8B9D83] bg-[#D4E7C5] bg-opacity-30'
-                  : 'border-[#D4E7C5] bg-[#F5F3EE]'
-              }`}
+              className={`border-3 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${isDragging
+                ? 'border-[#8B9D83] bg-[#D4E7C5] bg-opacity-30'
+                : 'border-[#D4E7C5] bg-[#F5F3EE]'
+                }`}
             >
               <UploadIcon size={48} className="mx-auto mb-4 text-[#8B9D83]" />
               <p className="text-lg font-semibold text-[#2D5016] mb-2">
@@ -130,14 +129,14 @@ function Upload() {
               <p className="text-sm text-[#2D5016] opacity-60 mb-6">
                 Limit 200MB per file • JPG, PNG, JPEG
               </p>
-              
+
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="bg-[#8B9D83] hover:bg-[#7A8B73] text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105"
               >
                 Browse files
               </button>
-              
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -203,7 +202,7 @@ function Upload() {
           {/* Results Section */}
           <div className="bg-white rounded-3xl p-8 shadow-lg">
             <h2 className="text-2xl font-bold text-[#2D5016] mb-6">Diagnosis Results</h2>
-            
+
             {!result && !isLoading && (
               <div className="flex flex-col items-center justify-center h-64 text-center">
                 <div className="bg-[#D4E7C5] p-6 rounded-full mb-4">
@@ -256,13 +255,12 @@ function Upload() {
                 {/* Severity */}
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-[#2D5016]">Severity:</span>
-                  <span className={`px-4 py-1 rounded-full text-sm font-semibold ${
-                    result.severity === 'high' 
-                      ? 'bg-[#C97064] text-white'
-                      : result.severity === 'moderate'
+                  <span className={`px-4 py-1 rounded-full text-sm font-semibold ${result.severity === 'high'
+                    ? 'bg-[#C97064] text-white'
+                    : result.severity === 'moderate'
                       ? 'bg-[#D4A574] text-white'
                       : 'bg-[#D4E7C5] text-[#2D5016]'
-                  }`}>
+                    }`}>
                     {result.severity.toUpperCase()}
                   </span>
                 </div>

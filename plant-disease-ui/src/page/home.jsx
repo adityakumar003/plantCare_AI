@@ -1,307 +1,341 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, Leaf, ArrowLeft, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import axios from 'axios';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const Home = () => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [prediction, setPrediction] = useState(null);
-  const fileInputRef = useRef(null);
+    const [file, setFile] = useState(null);
+    const [preview, setPreview] = useState(null);
+    const [result, setResult] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const fileInputRef = useRef(null);
 
-  const handleFileSelect = (file) => {
-    if (file && file.type.startsWith('image/')) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setPrediction(null);
-    }
-  };
+    const handleFileSelect = (selectedFile) => {
+        if (selectedFile && selectedFile.type.startsWith('image/')) {
+            setFile(selectedFile);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreview(reader.result);
+            };
+            reader.readAsDataURL(selectedFile);
+            setResult(null);
+        } else {
+            alert('Please select a valid image file');
+        }
+    };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    handleFileSelect(file);
-  };
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const droppedFile = e.dataTransfer.files[0];
+        handleFileSelect(droppedFile);
+    };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
 
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
+    const handleDragLeave = () => {
+        setIsDragging(false);
+    };
 
-  const handleFileInput = (e) => {
-    const file = e.target.files[0];
-    handleFileSelect(file);
-  };
+    const handleFileInput = (e) => {
+        const selectedFile = e.target.files[0];
+        handleFileSelect(selectedFile);
+    };
 
-  const removeFile = () => {
-    setSelectedFile(null);
-    setPreview(null);
-    setPrediction(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-    // Uncomment and modify this for your actual API call:
-  const handlePredict = async () => {
-    if (!selectedFile) return;
+    const removeFile = () => {
+        setFile(null);
+        setPreview(null);
+        setResult(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
-    setIsLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('image', selectedFile);
-      
-      const response = await fetch("http://localhost:5000/predict", {
-        method: 'POST',
-        body: formData
-      });
-      
-      const result = await response.json();
-      console.log('Prediction Result:', result);
-      setPrediction(result);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error:', error);
-      setIsLoading(false);
-    }
-    
-  };
+    const handleUpload = async () => {
+        if (!file) {
+            alert('Please select an image');
+            return;
+        }
 
-  return (
-    <div className="min-h-screen bg-[#F5F3EE]">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => window.location.href = '/'}
-              className="flex items-center gap-2 text-[#2D5016] hover:text-[#8B9D83] transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span className="font-medium">Back</span>
-            </button>
-            <div className="h-6 w-px bg-[#D4E7C5]" />
-            <div className="flex items-center gap-2">
-              <Leaf size={24} color="#8B9D83" />
-              <span className="text-xl font-bold text-[#2D5016]">PlantCare AI</span>
-            </div>
-          </div>
-        </nav>
-      </header>
+        setIsLoading(true);
 
-      {/* Main Content */}
-      <main className="max-w-70xl mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-[#2D5016] mb-4 text-center">
-            Detect Plant Diseases
-          </h1>
-          <p className="text-lg text-[#2D5016] opacity-80">
-            Upload an image of your plant's leaf to get instant diagnosis
-          </p>
-        </div>
-        <br />
-        <br />
-        <br />
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
 
-        <div className="grid lg:grid-cols-2 gap-8 ">
-          {/* Upload Section */}
-          <div className="bg-white rounded-3xl p-8 shadow-lg">
-            <h2 className="text-4xl font-bold text-[#2D5016] mb-6 text-center">Choose an image...</h2>
-            <br />
-            <br />
-            {/* Drag and Drop Area */}
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              className={`border-3 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
-                isDragging
-                  ? 'border-[#8B9D83] bg-[#D4E7C5] bg-opacity-30'
-                  : 'border-[#D4E7C5] bg-[#F5F3EE]'
-              }`}
-            >
-              <Upload size={48} className="mx-auto mb-4 text-[#8B9D83]" />
-              <p className="text-lg font-semibold text-[#2D5016] mb-2">
-                Drag and drop file here
-              </p>
-              <p className="text-sm text-[#2D5016] opacity-60 mb-6">
-                Limit 200MB per file • JPG, PNG, JPEG
-              </p>
-              
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-[#8B9D83] hover:bg-[#7A8B73] text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105"
-              >
-                Browse files
-              </button>
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileInput}
-                className="hidden"
-              />
-            </div>
+            const response = await axios.post('http://127.0.0.1:5000/predict', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
 
-            {/* Selected File Preview */}
-            {selectedFile && (
-              <div className="mt-6 bg-[#F5F3EE] rounded-xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#D4E7C5] p-3 rounded-lg">
-                    <Upload size={20} className="text-[#8B9D83]" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#2D5016]">{selectedFile.name}</p>
-                    <p className="text-sm text-[#2D5016] opacity-60">
-                      {(selectedFile.size / 1024).toFixed(1)}KB
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={removeFile}
-                  className="p-2 hover:bg-[#C97064] hover:bg-opacity-20 rounded-full transition-colors"
-                >
-                  <X size={20} className="text-[#C97064]" />
-                </button>
-              </div>
-            )}
+            // The backend now returns dynamic treatment recommendations from Gemini API
+            const prediction = {
+                disease: response.data.disease,
+                confidence: response.data.confidence,
+                severity: response.data.severity,
+                description: response.data.description,
+                treatment: response.data.treatment, // Will be null for healthy plants
+                is_healthy: response.data.is_healthy || false
+            };
 
-            {/* Preview Image */}
-            {preview && (
-              <div className="mt-6">
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="w-full h-64 object-cover rounded-xl shadow-md"
-                />
-              </div>
-            )}
+            setResult(prediction);
+            setIsLoading(false);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error predicting disease. Please check if the backend server is running.');
+            setIsLoading(false);
+        }
+    };
 
-            {/* Predict Button */}
-            {selectedFile && !prediction && (
-              <button
-                onClick={handlePredict}
-                disabled={isLoading}
-                className="w-full mt-6 bg-[#8B9D83] hover:bg-[#7A8B73] text-white px-8 py-4 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader className="animate-spin" size={20} />
-                    Analyzing...
-                  </>
-                ) : (
-                  'Detect Disease'
-                )}
-              </button>
-            )}
-          </div>
+    return (
+        <div className="app">
+            <Navbar />
 
-          {/* Results Section */}
-          <div className="bg-white rounded-3xl p-8 shadow-lg">
-            <h2 className="text-4xl font-bold text-[#2D5016] mb-6 text-center">Diagnosis Results</h2>
-            
-            {!prediction && !isLoading && (
-              <div className="flex flex-col items-center justify-center h-64 text-center">
-                <div className="bg-[#D4E7C5] p-6 rounded-full mb-4">
-                  <Leaf size={48} className="text-[#8B9D83]" />
-                </div>
-                <p className="text-[#2D5016] opacity-60">
-                  Upload an image to see the diagnosis results
-                </p>
-              </div>
-            )}
-
-            {isLoading && (
-              <div className="flex flex-col items-center justify-center h-64">
-                <Loader className="animate-spin text-[#8B9D83] mb-4" size={48} />
-                <p className="text-[#2D5016] font-semibold">Analyzing your plant...</p>
-              </div>
-            )}
-
-            {prediction && (
-              <div className="space-y-6">
-                {/* Disease Name */}
-                <div className="bg-[#D4E7C5] rounded-xl p-6">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="text-[#C97064] flex-shrink-0 mt-1" size={24} />
-                    <div>
-                      <h3 className="text-xl font-bold text-[#2D5016] mb-2">
-                        {prediction.disease}
-                      </h3>
-                      <p className="text-[#2D5016] opacity-80">
-                        {prediction.description}
-                      </p>
+            <section className="upload-section">
+                <div className="upload-container">
+                    <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)' }}>
+                        <h1>Plant Disease Detection</h1>
+                        <p style={{ fontSize: '1.125rem', color: 'var(--text-secondary)' }}>
+                            Upload an image of your plant's leaf to get instant diagnosis and treatment recommendations
+                        </p>
                     </div>
-                  </div>
-                </div>
 
-                {/* Confidence */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold text-[#2D5016]">Confidence</span>
-                    <span className="text-[#8B9D83] font-bold">{prediction.confidence}%</span>
-                  </div>
-                  <div className="w-full bg-[#F5F3EE] rounded-full h-3 overflow-hidden">
-                    <div
-                      className="bg-[#8B9D83] h-full rounded-full transition-all duration-500"
-                      style={{ width: `${prediction.confidence}%` }}
-                    />
-                  </div>
-                </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: preview ? '1fr 1fr' : '1fr', gap: 'var(--spacing-xl)' }}>
+                        {/* Upload Area */}
+                        <div>
+                            <div
+                                className={`upload-area ${isDragging ? 'drag-over' : ''}`}
+                                onDrop={handleDrop}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <div className="upload-icon">
+                                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                                        <path d="M40 10V50M40 10L25 25M40 10L55 25" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M15 50V65C15 67.761 17.239 70 20 70H60C62.761 70 65 67.761 65 65V50" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                                <h3 className="upload-text">
+                                    {file ? 'Change Image' : 'Drop your image here'}
+                                </h3>
+                                <p className="upload-hint">
+                                    or click to browse (JPG, PNG, JPEG)
+                                </p>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileInput}
+                                    style={{ display: 'none' }}
+                                />
+                            </div>
 
-                {/* Severity */}
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#2D5016]">Severity:</span>
-                  <span className={`px-4 py-1 rounded-full text-sm font-semibold ${
-                    prediction.severity === 'high' 
-                      ? 'bg-[#C97064] text-white'
-                      : prediction.severity === 'moderate'
-                      ? 'bg-[#D4A574] text-white'
-                      : 'bg-[#D4E7C5] text-[#2D5016]'
-                  }`}>
-                    {prediction.severity.toUpperCase()}
-                  </span>
-                </div>
+                            {file && (
+                                <div style={{
+                                    marginTop: 'var(--spacing-md)',
+                                    background: 'white',
+                                    padding: 'var(--spacing-md)',
+                                    borderRadius: 'var(--radius-md)',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <div>
+                                        <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{file.name}</p>
+                                        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                            {(file.size / 1024).toFixed(1)} KB
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); removeFile(); }}
+                                        style={{
+                                            background: 'transparent',
+                                            color: 'var(--terracotta)',
+                                            padding: '0.5rem',
+                                            borderRadius: '50%'
+                                        }}
+                                    >
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            )}
 
-                {/* Treatment */}
-                <div>
-                  <h4 className="font-bold text-[#2D5016] mb-3 flex items-center gap-2">
-                    <CheckCircle className="text-[#8B9D83]" size={20} />
-                    Recommended Treatment
-                  </h4>
-                  <ul className="space-y-2">
-                    {prediction.treatment.map((step, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-[#8B9D83] font-bold">{idx + 1}.</span>
-                        <span className="text-[#2D5016]">{step}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                            {file && !result && (
+                                <button
+                                    onClick={handleUpload}
+                                    disabled={isLoading}
+                                    className="btn btn-primary"
+                                    style={{ width: '100%', marginTop: 'var(--spacing-md)', justifyContent: 'center' }}
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
+                                                <path d="M10 2V6M10 14V18M18 10H14M6 10H2M15.657 4.343L12.828 7.172M7.172 12.828L4.343 15.657M15.657 15.657L12.828 12.828M7.172 7.172L4.343 4.343" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                            </svg>
+                                            Analyzing...
+                                        </>
+                                    ) : (
+                                        'Analyze Plant'
+                                    )}
+                                </button>
+                            )}
+                        </div>
 
-                {/* Analyze Another */}
-                <button
-                  onClick={removeFile}
-                  className="w-full bg-[#F5F3EE] hover:bg-[#D4E7C5] text-[#2D5016] px-8 py-3 rounded-full font-semibold transition-all duration-300"
-                >
-                  Analyze Another Image
-                </button>
-              </div>
-            )}
-          </div>
+                        {/* Preview & Results */}
+                        {preview && (
+                            <div>
+                                <img
+                                    src={preview}
+                                    alt="Plant preview"
+                                    className="result-image"
+                                    style={{ marginBottom: 'var(--spacing-md)' }}
+                                />
+
+                                {isLoading && (
+                                    <div style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
+                                        <div style={{
+                                            width: '60px',
+                                            height: '60px',
+                                            margin: '0 auto var(--spacing-md)',
+                                            animation: 'spin 1s linear infinite'
+                                        }}>
+                                            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                                                <circle cx="30" cy="30" r="25" stroke="var(--olive-light)" strokeWidth="4" />
+                                                <path d="M30 5C16.193 5 5 16.193 5 30" stroke="var(--forest-primary)" strokeWidth="4" strokeLinecap="round" />
+                                            </svg>
+                                        </div>
+                                        <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                            Analyzing your plant...
+                                        </p>
+                                    </div>
+                                )}
+
+                                {result && (
+                                    <div className="results">
+                                        <div className="results-header">
+                                            <h2>Diagnosis Results</h2>
+                                        </div>
+
+                                        <div className="result-info">
+                                            <div>
+                                                <p className="result-label">Disease Detected</p>
+                                                <p className="result-value">{result.disease}</p>
+                                                <p style={{ marginTop: 'var(--spacing-xs)', color: 'var(--text-secondary)' }}>
+                                                    {result.description}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-xs)' }}>
+                                                    <p className="result-label">Confidence</p>
+                                                    <p style={{ fontWeight: 700, color: 'var(--forest-primary)' }}>
+                                                        {result.confidence}%
+                                                    </p>
+                                                </div>
+                                                <div className="confidence-bar">
+                                                    <div className="confidence-fill" style={{ width: `${result.confidence}%` }}></div>
+                                                </div>
+                                            </div>
+
+                                            {!result.is_healthy && result.severity !== 'None' && (
+                                                <div>
+                                                    <p className="result-label">Severity Level</p>
+                                                    <span style={{
+                                                        display: 'inline-block',
+                                                        padding: '0.5rem 1rem',
+                                                        borderRadius: 'var(--radius-sm)',
+                                                        fontWeight: 600,
+                                                        fontSize: '0.875rem',
+                                                        textTransform: 'uppercase',
+                                                        background: result.severity.toLowerCase() === 'high' ? 'var(--terracotta)' :
+                                                            result.severity.toLowerCase() === 'moderate' ? '#D4A574' : 'var(--olive-light)',
+                                                        color: 'white'
+                                                    }}>
+                                                        {result.severity}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {result.treatment && result.treatment.length > 0 ? (
+                                                <div>
+                                                    <p className="result-label" style={{ marginBottom: 'var(--spacing-sm)' }}>
+                                                        Recommended Treatment
+                                                    </p>
+                                                    <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                                                        {result.treatment.map((step, idx) => (
+                                                            <li key={idx} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                                                                <span style={{
+                                                                    background: 'var(--forest-primary)',
+                                                                    color: 'white',
+                                                                    width: '24px',
+                                                                    height: '24px',
+                                                                    borderRadius: '50%',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    fontSize: '0.875rem',
+                                                                    fontWeight: 600,
+                                                                    flexShrink: 0
+                                                                }}>
+                                                                    {idx + 1}
+                                                                </span>
+                                                                <span style={{ color: 'var(--text-primary)', lineHeight: 1.6 }}>{step}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ) : result.is_healthy && (
+                                                <div style={{
+                                                    background: 'linear-gradient(135deg, #d4e7c5 0%, #cad2c5 100%)',
+                                                    padding: 'var(--spacing-lg)',
+                                                    borderRadius: 'var(--radius-md)',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style={{ margin: '0 auto var(--spacing-sm)' }}>
+                                                        <circle cx="24" cy="24" r="20" fill="var(--forest-primary)" opacity="0.2" />
+                                                        <path d="M16 24L21 29L32 18" stroke="var(--forest-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                                                    </svg>
+                                                    <p style={{ color: 'var(--forest-deep)', fontWeight: 600, fontSize: '1.125rem' }}>
+                                                        Great news! Your plant is healthy.
+                                                    </p>
+                                                    <p style={{ color: 'var(--sage-green)', marginTop: 'var(--spacing-xs)' }}>
+                                                        Keep up the good care and continue monitoring your plant regularly.
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <button
+                                                onClick={removeFile}
+                                                className="btn btn-secondary"
+                                                style={{ width: '100%', justifyContent: 'center' }}
+                                            >
+                                                Analyze Another Image
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
+
+            <Footer />
+
+            <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
         </div>
-      </main>
-    </div>
-  );
+    );
 };
 
 export default Home;
