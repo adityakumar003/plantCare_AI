@@ -78,8 +78,8 @@ def generate_treatment_recommendations(disease_name, confidence, severity):
         return fallback_treatment
     
     try:
-        # Create the Gemini model (using 1.5-flash for higher free tier limits)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Create the Gemini model (using the correct model path)
+        model = genai.GenerativeModel('models/gemini-2.0-flash-lite')
         
         # Construct detailed prompt
         prompt = f"""You are an expert plant pathologist and agricultural specialist. A plant has been diagnosed with the following disease:
